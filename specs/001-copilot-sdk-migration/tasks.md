@@ -17,10 +17,10 @@
 
 **Purpose**: Introduce the Copilot SDK dependency and create the planning/documentation anchors the implementation will follow.
 
-- [ ] T001 Update dependencies from Claude SDK to GitHub Copilot SDK in /home/adiazcan/github/claudian-copian/package.json
-- [ ] T002 [P] Replace the Claude SDK mock with a Copilot SDK mock surface in /home/adiazcan/github/claudian-copian/tests/__mocks__/claude-agent-sdk.ts
-- [ ] T003 [P] Add or rename provider-facing helper fixtures for Copilot session events in /home/adiazcan/github/claudian-copian/tests/helpers/sdkMessages.ts
-- [ ] T004 [P] Create the initial provider-boundary skeleton and capability checklist headings in /home/adiazcan/github/claudian-copian/specs/001-copilot-sdk-migration/contracts/provider-adapter.md
+- [X] T001 Update dependencies from Claude SDK to GitHub Copilot SDK in /home/adiazcan/github/claudian-copian/package.json
+- [X] T002 [P] Replace the Claude SDK mock with a Copilot SDK mock surface in /home/adiazcan/github/claudian-copian/tests/__mocks__/claude-agent-sdk.ts
+- [X] T003 [P] Add or rename provider-facing helper fixtures for Copilot session events in /home/adiazcan/github/claudian-copian/tests/helpers/sdkMessages.ts
+- [X] T004 [P] Create the initial provider-boundary skeleton and capability checklist headings in /home/adiazcan/github/claudian-copian/specs/001-copilot-sdk-migration/contracts/provider-adapter.md
 
 ---
 

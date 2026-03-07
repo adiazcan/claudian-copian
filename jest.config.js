@@ -9,12 +9,13 @@ const baseConfig = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@test/(.*)$': '<rootDir>/tests/$1',
+    '^@github/copilot-sdk$': '<rootDir>/tests/__mocks__/claude-agent-sdk.ts',
     '^@anthropic-ai/claude-agent-sdk$': '<rootDir>/tests/__mocks__/claude-agent-sdk.ts',
     '^obsidian$': '<rootDir>/tests/__mocks__/obsidian.ts',
     '^@modelcontextprotocol/sdk/(.*)$': '<rootDir>/node_modules/@modelcontextprotocol/sdk/dist/cjs/$1',
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(@anthropic-ai/claude-agent-sdk)/)',
+    'node_modules/(?!(?:@anthropic-ai/claude-agent-sdk|@github/copilot-sdk)/)',
   ],
 };
 

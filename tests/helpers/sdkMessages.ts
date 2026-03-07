@@ -94,6 +94,91 @@ export type SDKTestMessageInput =
   | ToolProgressMessageInput
   | AuthStatusMessageInput;
 
+const TEST_COPILOT_MESSAGE_ID = 'copilot-message-1';
+
+export type CopilotAssistantMessageDeltaEvent = {
+  type: 'assistant.message_delta';
+  sessionId: string;
+  messageId: string;
+  data: {
+    deltaContent: string;
+  };
+};
+
+export type CopilotAssistantReasoningDeltaEvent = {
+  type: 'assistant.reasoning_delta';
+  sessionId: string;
+  messageId: string;
+  data: {
+    deltaContent: string;
+  };
+};
+
+export type CopilotAssistantMessageEvent = {
+  type: 'assistant.message';
+  sessionId: string;
+  messageId: string;
+  data: {
+    content: string;
+  };
+};
+
+export type CopilotAssistantReasoningEvent = {
+  type: 'assistant.reasoning';
+  sessionId: string;
+  messageId: string;
+  data: {
+    content: string;
+  };
+};
+
+export type CopilotToolExecutionStartEvent = {
+  type: 'tool.execution_start';
+  sessionId: string;
+  messageId?: string;
+  data: {
+    toolName: string;
+    input?: Record<string, unknown>;
+  };
+};
+
+export type CopilotToolExecutionCompleteEvent = {
+  type: 'tool.execution_complete';
+  sessionId: string;
+  messageId?: string;
+  data: {
+    toolName: string;
+    result?: unknown;
+    isError?: boolean;
+  };
+};
+
+export type CopilotSessionIdleEvent = {
+  type: 'session.idle';
+  sessionId: string;
+  data: Record<string, never>;
+};
+
+export type CopilotSessionErrorEvent = {
+  type: 'session.error';
+  sessionId: string;
+  messageId?: string;
+  data: {
+    message: string;
+    code?: string;
+  };
+};
+
+export type CopilotTestEvent =
+  | CopilotAssistantMessageDeltaEvent
+  | CopilotAssistantReasoningDeltaEvent
+  | CopilotAssistantMessageEvent
+  | CopilotAssistantReasoningEvent
+  | CopilotToolExecutionStartEvent
+  | CopilotToolExecutionCompleteEvent
+  | CopilotSessionIdleEvent
+  | CopilotSessionErrorEvent;
+
 export function buildSystemInitMessage(overrides: Partial<Omit<SDKSystemMessage, 'type' | 'subtype'>> = {}): SDKSystemMessage {
   return {
     type: 'system',
@@ -288,4 +373,115 @@ export function buildSDKMessage(input: SDKTestMessageInput): SDKMessage {
     case 'auth_status':
       return buildAuthStatusMessage(input);
   }
+}
+
+export function buildCopilotMessageDeltaEvent(
+  overrides: Partial<CopilotAssistantMessageDeltaEvent> = {}
+): CopilotAssistantMessageDeltaEvent {
+  return {
+    type: 'assistant.message_delta',
+    sessionId: TEST_SESSION_ID,
+    messageId: TEST_COPILOT_MESSAGE_ID,
+    data: {
+      deltaContent: '',
+    },
+    ...overrides,
+  };
+}
+
+export function buildCopilotReasoningDeltaEvent(
+  overrides: Partial<CopilotAssistantReasoningDeltaEvent> = {}
+): CopilotAssistantReasoningDeltaEvent {
+  return {
+    type: 'assistant.reasoning_delta',
+    sessionId: TEST_SESSION_ID,
+    messageId: TEST_COPILOT_MESSAGE_ID,
+    data: {
+      deltaContent: '',
+    },
+    ...overrides,
+  };
+}
+
+export function buildCopilotMessageEvent(
+  overrides: Partial<CopilotAssistantMessageEvent> = {}
+): CopilotAssistantMessageEvent {
+  return {
+    type: 'assistant.message',
+    sessionId: TEST_SESSION_ID,
+    messageId: TEST_COPILOT_MESSAGE_ID,
+    data: {
+      content: 'Hello from GitHub Copilot',
+    },
+    ...overrides,
+  };
+}
+
+export function buildCopilotReasoningEvent(
+  overrides: Partial<CopilotAssistantReasoningEvent> = {}
+): CopilotAssistantReasoningEvent {
+  return {
+    type: 'assistant.reasoning',
+    sessionId: TEST_SESSION_ID,
+    messageId: TEST_COPILOT_MESSAGE_ID,
+    data: {
+      content: '',
+    },
+    ...overrides,
+  };
+}
+
+export function buildCopilotToolExecutionStartEvent(
+  overrides: Partial<CopilotToolExecutionStartEvent> = {}
+): CopilotToolExecutionStartEvent {
+  return {
+    type: 'tool.execution_start',
+    sessionId: TEST_SESSION_ID,
+    messageId: TEST_COPILOT_MESSAGE_ID,
+    data: {
+      toolName: 'read_file',
+    },
+    ...overrides,
+  };
+}
+
+export function buildCopilotToolExecutionCompleteEvent(
+  overrides: Partial<CopilotToolExecutionCompleteEvent> = {}
+): CopilotToolExecutionCompleteEvent {
+  return {
+    type: 'tool.execution_complete',
+    sessionId: TEST_SESSION_ID,
+    messageId: TEST_COPILOT_MESSAGE_ID,
+    data: {
+      toolName: 'read_file',
+      result: { success: true },
+      isError: false,
+    },
+    ...overrides,
+  };
+}
+
+export function buildCopilotSessionIdleEvent(
+  overrides: Partial<CopilotSessionIdleEvent> = {}
+): CopilotSessionIdleEvent {
+  return {
+    type: 'session.idle',
+    sessionId: TEST_SESSION_ID,
+    data: {},
+    ...overrides,
+  };
+}
+
+export function buildCopilotSessionErrorEvent(
+  overrides: Partial<CopilotSessionErrorEvent> = {}
+): CopilotSessionErrorEvent {
+  return {
+    type: 'session.error',
+    sessionId: TEST_SESSION_ID,
+    messageId: TEST_COPILOT_MESSAGE_ID,
+    data: {
+      message: 'Copilot session failed',
+    },
+    ...overrides,
+  };
 }

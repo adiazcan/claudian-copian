@@ -1,4 +1,4 @@
-// Mock for @anthropic-ai/claude-agent-sdk
+// Compatibility mock for provider SDK tests during the Claude-to-Copilot migration.
 
 export interface HookCallbackMatcher {
   matcher?: string;
@@ -99,6 +99,87 @@ export type PermissionResult =
   | { behavior: 'allow'; updatedInput?: Record<string, unknown>; updatedPermissions?: PermissionUpdate[]; toolUseID?: string }
   | { behavior: 'deny'; message: string; interrupt?: boolean; toolUseID?: string };
 
+export type CopilotEventName =
+  | 'assistant.message_delta'
+  | 'assistant.reasoning_delta'
+  | 'assistant.message'
+  | 'assistant.reasoning'
+  | 'tool.execution_start'
+  | 'tool.execution_complete'
+  | 'session.idle'
+  | 'session.error';
+
+export interface CopilotSessionEvent<TData = Record<string, unknown>> {
+  type: CopilotEventName;
+  data: TData;
+  sessionId: string;
+  messageId?: string;
+}
+
+export interface CopilotAttachment {
+  type: 'file';
+  path: string;
+  displayName?: string;
+}
+
+export interface CopilotMessageOptions {
+  prompt: string;
+  attachments?: CopilotAttachment[];
+  mode?: 'enqueue' | 'immediate';
+}
+
+export interface CopilotSessionOptions {
+  sessionId?: string;
+  cwd?: string;
+  model?: string;
+  streaming?: boolean;
+  reasoningEffort?: 'low' | 'medium' | 'high';
+}
+
+export interface CopilotClientOptions {
+  cwd?: string;
+  cliPath?: string;
+  githubToken?: string;
+  useLoggedInUser?: boolean;
+}
+
+export interface MockCopilotSession {
+  id: string;
+  on: jest.Mock;
+  send: jest.Mock;
+  sendAndWait: jest.Mock;
+  destroy: jest.Mock;
+  disconnect: jest.Mock;
+  emit: (event: CopilotSessionEvent) => void;
+}
+
+const DEFAULT_COPILOT_SESSION_ID = 'copilot-session-123';
+const DEFAULT_COPILOT_EVENTS: CopilotSessionEvent[] = [
+  {
+    type: 'assistant.message_delta',
+    data: { deltaContent: 'Hello from GitHub Copilot' },
+    sessionId: DEFAULT_COPILOT_SESSION_ID,
+    messageId: 'copilot-message-1',
+  },
+  {
+    type: 'assistant.message',
+    data: { content: 'Hello from GitHub Copilot' },
+    sessionId: DEFAULT_COPILOT_SESSION_ID,
+    messageId: 'copilot-message-1',
+  },
+  {
+    type: 'session.idle',
+    data: {},
+    sessionId: DEFAULT_COPILOT_SESSION_ID,
+  },
+];
+
+let customCopilotEvents: CopilotSessionEvent[] | null = null;
+let lastCopilotClientOptions: CopilotClientOptions | undefined;
+let lastCopilotSessionOptions: CopilotSessionOptions | undefined;
+let lastCopilotMessageOptions: CopilotMessageOptions | undefined;
+let lastCopilotSession: MockCopilotSession | null = null;
+
 // Default mock messages for testing
 const mockMessages = [
   { type: 'system', subtype: 'init', session_id: 'test-session-123' },
@@ -136,6 +217,140 @@ export function resetMockMessages() {
   shouldThrowOnIteration = false;
   throwAfterChunks = 0;
   queryCallCount = 0;
+  customCopilotEvents = null;
+  lastCopilotClientOptions = undefined;
+  lastCopilotSessionOptions = undefined;
+  lastCopilotMessageOptions = undefined;
+  lastCopilotSession = null;
+}
+
+export function setMockCopilotEvents(events: CopilotSessionEvent[]) {
+  customCopilotEvents = events;
+}
+
+export function resetMockCopilotEvents() {
+  customCopilotEvents = null;
+  lastCopilotMessageOptions = undefined;
+  lastCopilotSession = null;
+}
+
+export function getLastCopilotClientOptions(): CopilotClientOptions | undefined {
+  return lastCopilotClientOptions;
+}
+
+export function getLastCopilotSessionOptions(): CopilotSessionOptions | undefined {
+  return lastCopilotSessionOptions;
+}
+
+export function getLastCopilotMessageOptions(): CopilotMessageOptions | undefined {
+  return lastCopilotMessageOptions;
+}
+
+export function getLastCopilotSession(): MockCopilotSession | null {
+  return lastCopilotSession;
+}
+
+function getCopilotEventsForSession(sessionId: string): CopilotSessionEvent[] {
+  const sourceEvents = customCopilotEvents ?? DEFAULT_COPILOT_EVENTS;
+
+  return sourceEvents.map((event) => ({
+    ...event,
+    sessionId,
+  }));
+}
+
+function createMockCopilotSession(sessionId: string): MockCopilotSession {
+  const typedHandlers = new Map<string, Set<(event: CopilotSessionEvent) => void>>();
+  const wildcardHandlers = new Set<(event: CopilotSessionEvent) => void>();
+
+  const emit = (event: CopilotSessionEvent) => {
+    const handlers = typedHandlers.get(event.type);
+    if (handlers) {
+      for (const handler of handlers) {
+        handler(event);
+      }
+    }
+
+    for (const handler of wildcardHandlers) {
+      handler(event);
+    }
+  };
+
+  const on = jest.fn((eventNameOrHandler: string | ((event: CopilotSessionEvent) => void), handler?: (event: CopilotSessionEvent) => void) => {
+    if (typeof eventNameOrHandler === 'function') {
+      wildcardHandlers.add(eventNameOrHandler);
+      return () => wildcardHandlers.delete(eventNameOrHandler);
+    }
+
+    const handlers = typedHandlers.get(eventNameOrHandler) ?? new Set<(event: CopilotSessionEvent) => void>();
+    typedHandlers.set(eventNameOrHandler, handlers);
+
+    if (handler) {
+      handlers.add(handler);
+      return () => handlers.delete(handler);
+    }
+
+    return () => undefined;
+  });
+
+  const send = jest.fn(async (options: CopilotMessageOptions) => {
+    lastCopilotMessageOptions = options;
+    for (const event of getCopilotEventsForSession(sessionId)) {
+      emit(event);
+    }
+    return 'copilot-message-1';
+  });
+
+  const sendAndWait = jest.fn(async (options: CopilotMessageOptions) => {
+    lastCopilotMessageOptions = options;
+    let finalMessage: CopilotSessionEvent | undefined;
+
+    for (const event of getCopilotEventsForSession(sessionId)) {
+      emit(event);
+      if (event.type === 'assistant.message') {
+        finalMessage = event;
+      }
+    }
+
+    return finalMessage;
+  });
+
+  return {
+    id: sessionId,
+    on,
+    send,
+    sendAndWait,
+    destroy: jest.fn().mockResolvedValue(undefined),
+    disconnect: jest.fn().mockResolvedValue(undefined),
+    emit,
+  };
+}
+
+export class CopilotClient {
+  readonly options?: CopilotClientOptions;
+  readonly createSession: jest.Mock;
+  readonly resumeSession: jest.Mock;
+  readonly stop: jest.Mock;
+
+  constructor(options?: CopilotClientOptions) {
+    this.options = options;
+    lastCopilotClientOptions = options;
+
+    this.createSession = jest.fn(async (sessionOptions: CopilotSessionOptions = {}) => {
+      const sessionId = sessionOptions.sessionId ?? DEFAULT_COPILOT_SESSION_ID;
+      lastCopilotSessionOptions = sessionOptions;
+      lastCopilotSession = createMockCopilotSession(sessionId);
+      return lastCopilotSession;
+    });
+
+    this.resumeSession = jest.fn(async (sessionId: string, sessionOptions: CopilotSessionOptions = {}) => {
+      lastCopilotSessionOptions = { ...sessionOptions, sessionId };
+      lastCopilotSession = createMockCopilotSession(sessionId);
+      return lastCopilotSession;
+    });
+
+    this.stop = jest.fn().mockResolvedValue(undefined);
+  }
 }
 
 /**

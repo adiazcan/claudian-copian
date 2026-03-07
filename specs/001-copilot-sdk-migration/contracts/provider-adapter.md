@@ -123,6 +123,44 @@ Each category must provide a user-facing message and an implementation-facing er
 
 ## Capability Disposition Matrix
 
+## Phase 1 Capability Checklist
+
+### Claude-derived plugins
+
+- current dependency assumptions
+- Copilot replacement strategy
+- user-visible impact notes
+
+### Session fork and rewind semantics
+
+- current dependency assumptions
+- Copilot replacement strategy
+- user-visible impact notes
+
+### Subagent behavior
+
+- current dependency assumptions
+- Copilot replacement strategy
+- user-visible impact notes
+
+### MCP parity
+
+- current dependency assumptions
+- Copilot replacement strategy
+- user-visible impact notes
+
+### Provider-specific settings
+
+- current dependency assumptions
+- Copilot replacement strategy
+- user-visible impact notes
+
+### Session-file assumptions
+
+- current dependency assumptions
+- Copilot replacement strategy
+- user-visible impact notes
+
 | Capability | Current Claude Dependency | Copilot Outcome | User-Visible Impact | Owner Task |
 |------------|---------------------------|-----------------|---------------------|------------|
 | Claude plugin discovery | Claude plugin directory and enablement model | Unsupported or replaced | Yes | T009 / T037 |
