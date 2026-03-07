@@ -120,3 +120,16 @@ The adapter must classify and surface at least these failure categories:
 - tool policy denial
 
 Each category must provide a user-facing message and an implementation-facing error code or discriminator suitable for tests.
+
+## Capability Disposition Matrix
+
+| Capability | Current Claude Dependency | Copilot Outcome | User-Visible Impact | Owner Task |
+|------------|---------------------------|-----------------|---------------------|------------|
+| Claude plugin discovery | Claude plugin directory and enablement model | Unsupported or replaced | Yes | T009 / T037 |
+| Session fork and rewind | Claude session `resumeAt` and fork semantics | Needs explicit decision | Yes | T009 / T037 |
+| Subagent behavior | Claude task and subagent event model | Needs explicit decision | Yes | T009 / T037 |
+| MCP activation and storage | Existing MCP manager and storage integration | Preserve if provider-neutral | Yes | T035 / T037 |
+| External context attachment | Existing context mention and attachment flow | Preserve | Yes | T034 |
+| Agent definition loading | Existing agent manager and storage | Preserve if provider-neutral | Yes | T036 |
+| Claude-specific settings | Claude CLI path and related settings | Replace | Yes | T009 / T042 |
+| Claude session file parsing | Claude native on-disk session format | Remove | No | T009 / T017 |
